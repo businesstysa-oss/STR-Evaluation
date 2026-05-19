@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mountain STR Investment Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --snow: #F2F0EC;
+    --birch: #E8E3D9;
+    --pine: #1C2B1A;
+    --pine-mid: #2D4A2A;
+    --pine-lt: #3D6438;
+    --ice: #C8D8E8;
+    --sky: #4A7FA5;
+    --sky-lt: #7AAFC8;
+    --gold: #C4892A;
+    --gold-lt: #E8B86D;
+    --red: #A83C2A;
+    --red-lt: #D4614A;
+    --cream: #FAF8F4;
+    --mid: #6B7060;
+    --div: rgba(28,43,26,0.1);
+    --shadow: 0 4px 24px rgba(28,43,26,0.12);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--snow);
+    color: var(--pine);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  /* MOUNTAIN HEADER */
+  .header {
+    background: var(--pine);
+    padding: 40px 48px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 60'%3E%3Cpolygon points='0,60 120,10 240,45 380,5 520,40 660,0 800,35 940,8 1080,42 1200,15 1200,60' fill='%23F2F0EC'/%3E%3C/svg%3E") no-repeat bottom;
+    background-size: cover;
+  }
+  .header-inner { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-start; }
+  .h-left {}
+  .eyebrow { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--sky-lt); text-transform: uppercase; margin-bottom: 10px; }
+  .h-title { font-family: 'Playfair Display', serif; font-size: 38px; color: var(--snow); line-height: 1.1; }
+  .h-title em { color: var(--gold-lt); font-style: italic; }
+  .h-sub { font-size: 13px; color: #8AA890; margin-top: 8px; }
+  .verdict-badge {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 16px 24px;
+    text-align: center;
+    min-width: 160px;
+  }
+  .verdict-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; color: #8AA890; }
+  .verdict-value { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--snow); margin-top: 4px; }
+  .verdict-sub { font-size: 11px; color: var(--gold-lt); margin-top: 2px; }
+
+  /* LAYOUT */
+  .main { max-width: 1100px; margin: 0 auto; padding: 40px 32px 80px; }
+  .grid { display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: start; }
+
+  /* SLIDERS PANEL */
+  .panel {
+    background: var(--cream);
+    border: 1px solid var(--div);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 20px;
+  }
+  .panel-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--mid); margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--div); }
+
+  .slider-group { margin-bottom: 24px; }
+  .slider-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .slider-label { font-size: 13px; color: var(--pine); }
+  .slider-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--pine); }
+  .slider-val.green { color: var(--pine-lt); }
+  .slider-val.gold { color: var(--gold); }
+  .slider-val.red { color: var(--red); }
+
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--birch);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--pine);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { background: var(--pine-lt); }
+
+  .slider-hint { font-size: 11px; color: var(--mid); margin-top: 5px; }
+
+  .toggle-group { margin-bottom: 20px; }
+  .toggle-label { font-size: 13px; margin-bottom: 8px; display: block; }
+  .toggle-opts { display: flex; gap: 0; }
+  .toggle-opt {
+    flex: 1; padding: 8px; text-align: center;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 1px;
+    border: 1px solid var(--div); cursor: pointer;
+    background: var(--snow); color: var(--mid);
+    transition: all 0.15s;
+  }
+  .toggle-opt:first-child { border-radius: 2px 0 0 2px; }
+  .toggle-opt:last-child { border-radius: 0 2px 2px 0; border-left: none; }
+  .toggle-opt.active { background: var(--pine); color: var(--snow); border-color: var(--pine); }
+
+  .section-divider { border: none; border-top: 1px solid var(--div); margin: 20px 0; }
+
+  /* RESULTS */
+  .results { }
+
+  /* KPI ROW */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--cream);
+    border: 1px solid var(--div);
+    padding: 20px 18px;
+    box-shadow: var(--shadow);
+  }
+  .kpi-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--mid); text-transform: uppercase; margin-bottom: 8px; }
+  .kpi-value { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--pine); line-height: 1; }
+  .kpi-value.pos { color: var(--pine-lt); }
+  .kpi-value.neg { color: var(--red); }
+  .kpi-value.gold { color: var(--gold); }
+  .kpi-sub { font-size: 11px; color: var(--mid); margin-top: 6px; }
+
+  /* CHART */
+  .chart-box {
+    background: var(--cream);
+    border: 1px solid var(--div);
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .chart-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--mid); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .chart-area { height: 200px; position: relative; display: flex; align-items: flex-end; gap: 3px; }
+  .chart-zero { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(28,43,26,0.2); }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; height: 100%; justify-content: flex-end; position: relative; }
+  .bar-pos { background: var(--pine-lt); width: 100%; transition: height 0.4s ease; min-height: 2px; }
+  .bar-neg { background: var(--red-lt); width: 100%; transition: height 0.4s ease; min-height: 2px; }
+  .bar-costseg { background: var(--gold); width: 100%; transition: height 0.4s ease; }
+  .bar-appx { background: var(--sky); width: 100%; transition: height 0.4s ease; }
+  .bar-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--mid); margin-top: 6px; white-space: nowrap; }
+  .bar-val { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; position: absolute; top: -18px; white-space: nowrap; }
+  .bar-val.pos-val { color: var(--pine-lt); }
+  .bar-val.neg-val { color: var(--red); }
+
+  /* BREAKDOWN TABLE */
+  .breakdown {
+    background: var(--cream);
+    border: 1px solid var(--div);
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .breakdown-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--mid); margin-bottom: 20px; }
+  .btable { width: 100%; border-collapse: collapse; }
+  .btable th { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--mid); text-align: right; padding: 0 0 10px; border-bottom: 1px solid var(--div); }
+  .btable th:first-child { text-align: left; }
+  .btable td { padding: 10px 0; font-size: 13px; border-bottom: 1px solid rgba(28,43,26,0.05); text-align: right; }
+  .btable td:first-child { text-align: left; }
+  .btable .mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+  .btable .subtotal td { font-weight: 500; border-top: 1px solid var(--div); border-bottom: 2px solid var(--div); }
+  .btable .total td { font-family: 'Playfair Display', serif; font-size: 16px; border-bottom: none; padding-top: 14px; }
+  .btable .grp td { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); background: rgba(196,137,42,0.05); padding: 10px 8px; border-bottom: none; }
+  .pos-text { color: var(--pine-lt); }
+  .neg-text { color: var(--red); }
+  .gold-text { color: var(--gold); }
+  .sky-text { color: var(--sky); }
+
+  /* VERDICT BOX */
+  .verdict-box {
+    padding: 24px 28px;
+    border-left: 4px solid;
+    background: var(--cream);
+    box-shadow: var(--shadow);
+  }
+  .verdict-box.positive { border-color: var(--pine-lt); }
+  .verdict-box.negative { border-color: var(--red); }
+  .verdict-box.neutral { border-color: var(--gold); }
+  .verdict-box-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .verdict-box.positive .verdict-box-title { color: var(--pine-lt); }
+  .verdict-box.negative .verdict-box-title { color: var(--red); }
+  .verdict-box.neutral .verdict-box-title { color: var(--gold); }
+  .verdict-box-text { font-size: 14px; line-height: 1.75; color: var(--pine); }
+
+  /* LEGEND */
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 10px; color: var(--mid); }
+  .leg-dot { width: 10px; height: 10px; border-radius: 1px; flex-shrink: 0; }
+
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+    .panel { position: static; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ACTION BUTTONS */
+  .action-btn {
+    width:100%; padding:9px 12px; border:1px solid var(--div); background:var(--snow);
+    font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1px; cursor:pointer;
+    color:var(--pine); text-align:left; transition:all 0.15s;
+  }
+  .action-btn:hover { background:var(--birch); }
+  .export-btn { background:var(--pine); color:var(--snow); border-color:var(--pine); }
+  .export-btn:hover { background:var(--pine-mid); }
+
+  /* MATH EXPLAINER ACCORDION */
+  .math-section { margin-bottom:4px; }
+  .math-toggle {
+    display:flex; align-items:center; gap:10px; cursor:pointer;
+    padding:10px 0; border-bottom:1px solid var(--div); user-select:none;
+  }
+  .math-toggle:hover .math-toggle-label { color:var(--pine-lt); }
+  .math-arrow { font-size:11px; color:var(--mid); transition:transform 0.2s; flex-shrink:0; font-family:monospace; }
+  .math-toggle.open .math-arrow { transform:rotate(90deg); }
+  .math-toggle-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--mid); flex:1; }
+  .math-toggle.open .math-toggle-label { color:var(--pine); }
+  .math-content {
+    display:none; padding:14px 0 8px 16px; font-size:12px; line-height:1.85; color:#444;
+    border-left:3px solid var(--birch);
+  }
+  .math-content.visible { display:block; }
+  .math-formula {
+    font-family:'DM Mono',monospace; font-size:11px; background:rgba(28,43,26,0.05);
+    padding:10px 14px; margin:10px 0; line-height:2; color:var(--pine); white-space:pre-wrap;
+  }
+  .math-formula .hl { color:var(--gold); font-weight:500; }
+  .math-formula .hlg { color:var(--pine-lt); font-weight:500; }
+  .math-formula .hlr { color:var(--red); font-weight:500; }
+  .math-formula .hls { color:var(--sky); font-weight:500; }
+  .math-note { font-size:11px; color:var(--mid); margin-top:8px; font-style:italic; line-height:1.6; }
+  .math-vals { font-family:'DM Mono',monospace; font-size:11px; color:var(--pine-lt); font-weight:500; }
+
+  @media print {
+    .panel { display:none; }
+    .grid { grid-template-columns:1fr; }
+    .header::before { display:none; }
+    .action-btn { display:none; }
+    body { background:white; }
+    .math-content { display:block !important; }
+    .math-toggle .math-arrow { display:none; }
+    .chart-box { page-break-inside:avoid; }
+    .breakdown { page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="h-left">
+      <div class="eyebrow">Real Estate Investment Analysis</div>
+      <h1 class="h-title">Mountain STR<br><em>Cost Segregation Calculator</em></h1>
+      <div class="h-sub">Short-Term Rental · 2BD/2BA Condo · Summit County, CO</div>
+    </div>
+    <div class="verdict-badge">
+      <div class="verdict-label">5-Year Total Return</div>
+      <div class="verdict-value" id="header-return">—</div>
+      <div class="verdict-sub" id="header-irr">on $180K invested</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="grid">
+
+    <!-- SLIDERS -->
+    <div class="panel">
+      <div class="panel-title">Adjust Assumptions</div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Purchase Price</span>
+          <span class="slider-val" id="lbl-price">$900,000</span>
+        </div>
+        <input type="range" id="sl-price" min="300000" max="2000000" step="25000" value="900000">
+        <div class="slider-hint">Down payment auto-adjusts at 20%</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Renovation Cost</span>
+          <span class="slider-val gold" id="lbl-reno">$0</span>
+        </div>
+        <input type="range" id="sl-reno" min="0" max="500000" step="5000" value="0">
+        <div class="slider-hint">Added to total cash invested (not mortgaged)</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Revenue Lift from Reno</span>
+          <span class="slider-val green" id="lbl-renolift">0%</span>
+        </div>
+        <input type="range" id="sl-renolift" min="0" max="75" step="5" value="0">
+        <div class="slider-hint">% increase in nightly rate after renovation</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Property Value Lift from Reno</span>
+          <span class="slider-val green" id="lbl-renovaluelift">0%</span>
+        </div>
+        <input type="range" id="sl-renovaluelift" min="0" max="50" step="5" value="0">
+        <div class="slider-hint">Immediate % bump in appraised value</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Gross Annual Revenue</span>
+          <span class="slider-val gold" id="lbl-revenue">$90,000</span>
+        </div>
+        <input type="range" id="sl-revenue" min="35000" max="80000" step="1000" value="70000">
+        <div class="slider-hint">Conservative: $45K · Realistic: $60K · Strong: $75K</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Annual Appreciation</span>
+          <span class="slider-val green" id="lbl-appr">6.0%</span>
+        </div>
+        <input type="range" id="sl-appr" min="0" max="15" step="0.5" value="6">
+        <div class="slider-hint">Historical Summit Co avg: 6–8% · Bear case: 2%</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Your Marginal Tax Rate</span>
+          <span class="slider-val" id="lbl-taxrate">37%</span>
+        </div>
+        <input type="range" id="sl-taxrate" min="12" max="50" step="1" value="37">
+        <div class="slider-hint">Fed + state combined. Your bracket: ~41%</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Mortgage Rate</span>
+          <span class="slider-val" id="lbl-rate">6.75%</span>
+        </div>
+        <input type="range" id="sl-rate" min="3" max="12" step="0.25" value="6.75">
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="toggle-group">
+        <span class="toggle-label" style="font-size:13px;">Cost Segregation?</span>
+        <div class="toggle-opts">
+          <div class="toggle-opt active" id="tog-costseg-yes" onclick="setToggle('costseg', true)">YES — DO IT</div>
+          <div class="toggle-opt" id="tog-costseg-no" onclick="setToggle('costseg', false)">NO / SKIP</div>
+        </div>
+        <div class="slider-hint" style="margin-top:8px;">Reclassifies ~20% of purchase into 5–15yr depreciation</div>
+      </div>
+
+      <div class="toggle-group">
+        <span class="toggle-label" style="font-size:13px;">Material Participation?</span>
+        <div class="toggle-opts">
+          <div class="toggle-opt active" id="tog-matpart-yes" onclick="setToggle('matpart', true)">YES — SELF-MGR</div>
+          <div class="toggle-opt" id="tog-matpart-no" onclick="setToggle('matpart', false)">NO — PASSIVE</div>
+        </div>
+        <div class="slider-hint" style="margin-top:8px;">Required to deduct STR losses vs W-2 income</div>
+      </div>
+
+      <div class="toggle-group">
+        <span class="toggle-label" style="font-size:13px;">Bonus Depreciation (2026)</span>
+        <div class="toggle-opts">
+          <div class="toggle-opt active" id="tog-bonus-40" onclick="setToggle('bonus', 40)">40% (2026)</div>
+          <div class="toggle-opt" id="tog-bonus-20" onclick="setToggle('bonus', 20)">20% (2027)</div>
+          <div class="toggle-opt" id="tog-bonus-0" onclick="setToggle('bonus', 0)">0% (2028+)</div>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">HOA (monthly)</span>
+          <span class="slider-val" id="lbl-hoa">$800</span>
+        </div>
+        <input type="range" id="sl-hoa" min="0" max="3000" step="50" value="800">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-row">
+          <span class="slider-label">Platform Fees</span>
+          <span class="slider-val" id="lbl-fees">12%</span>
+        </div>
+        <input type="range" id="sl-fees" min="3" max="35" step="1" value="12">
+        <div class="slider-hint">Airbnb/VRBO ~12%. Property manager: 20–30%.</div>
+      </div>
+
+      <hr class="section-divider">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="action-btn" onclick="saveScenario()">💾 Save Scenario</button>
+        <button class="action-btn" onclick="loadScenario()">📂 Load Saved</button>
+        <button class="action-btn" onclick="copyShareLink()">🔗 Copy Share Link</button>
+        <button class="action-btn export-btn" onclick="exportPDF()">⬇ Export for Advisor</button>
+      </div>
+      <div id="save-msg" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--pine-lt);margin-top:8px;min-height:16px;"></div>
+
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results">
+
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Year 1 Cash Flow</div>
+          <div class="kpi-value" id="kpi-cf1">—</div>
+          <div class="kpi-sub" id="kpi-cf1-sub">after all expenses</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Year 1 Tax Savings</div>
+          <div class="kpi-value gold" id="kpi-tax1">—</div>
+          <div class="kpi-sub" id="kpi-tax1-sub">cost seg + depreciation</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Year 1 Equity Gain</div>
+          <div class="kpi-value" id="kpi-eq1">—</div>
+          <div class="kpi-sub" id="kpi-eq1-sub">appreciation + paydown</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">5-Year Total Return</div>
+          <div class="kpi-value" id="kpi-5yr">—</div>
+          <div class="kpi-sub">on down payment invested</div>
+        </div>
+      </div>
+
+      <!-- ANNUAL CHART -->
+      <div class="chart-box">
+        <div class="chart-title">
+          <span>Annual Returns by Component — Years 1–5</span>
+          <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--red-lt)"></div>Cash Flow</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--gold)"></div>Tax Savings</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--sky)"></div>Appreciation</div>
+          </div>
+        </div>
+        <div class="chart-area" id="chart-area">
+          <!-- generated by JS -->
+        </div>
+        <div style="display:flex; gap:0; margin-top:24px;" id="chart-labels"></div>
+      </div>
+
+      <!-- BREAKDOWN TABLE -->
+      <div class="breakdown">
+        <div class="breakdown-title">Full Year-by-Year Breakdown</div>
+        <table class="btable">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Year 1</th>
+              <th>Year 2</th>
+              <th>Year 3</th>
+              <th>Year 4</th>
+              <th>Year 5</th>
+              <th>5-Yr Total</th>
+            </tr>
+          </thead>
+          <tbody id="breakdown-body">
+          </tbody>
+        </table>
+      </div>
+
+      <!-- MATH EXPLAINERS -->
+      <div class="breakdown" id="math-explainers">
+        <div class="breakdown-title">How the Math Works — Expand to Review</div>
+
+        <div class="math-section">
+          <div class="math-toggle" onclick="toggleMath(this)">
+            <span class="math-arrow">▶</span>
+            <span class="math-toggle-label">1 · Cash Flow Calculation</span>
+          </div>
+          <div class="math-content">
+            <p>Cash flow is simply what's left from rental revenue after paying all operating costs and debt service. It does <em>not</em> include depreciation or tax savings — those are separate benefits.</p>
+            <div class="math-formula" id="math-cf">Loading...</div>
+            <p class="math-note">Revenue grows ~5% per year in years 2–5 as the listing builds reviews and occupancy. Year 1 is the hardest — new listings start at a discount.</p>
+          </div>
+        </div>
+
+        <div class="math-section">
+          <div class="math-toggle" onclick="toggleMath(this)">
+            <span class="math-arrow">▶</span>
+            <span class="math-toggle-label">2 · Depreciation &amp; Cost Segregation Tax Savings</span>
+          </div>
+          <div class="math-content">
+            <p>The IRS allows rental property owners to deduct a "depreciation" expense each year — the theoretical wear and tear on the building. Normally this is spread over 27.5 years. Cost segregation accelerates a portion to 5–15 years, and bonus depreciation lets you take a large chunk in year one.</p>
+            <div class="math-formula" id="math-depr">Loading...</div>
+            <p class="math-note">Tax savings = total deductions × marginal tax rate. With material participation, losses offset your W-2 income directly. Without it, losses are "passive" and can only offset other passive income — they don't reduce your salary taxes.</p>
+          </div>
+        </div>
+
+        <div class="math-section">
+          <div class="math-toggle" onclick="toggleMath(this)">
+            <span class="math-arrow">▶</span>
+            <span class="math-toggle-label">3 · Equity Building (Appreciation + Principal Paydown)</span>
+          </div>
+          <div class="math-content">
+            <p>Each year you build equity two ways: the property increases in value (appreciation), and your mortgage balance slowly decreases (principal paydown). Both accrue to your net worth even if you don't sell.</p>
+            <div class="math-formula" id="math-equity">Loading...</div>
+            <p class="math-note">Appreciation is the biggest variable in the model — and the hardest to predict. The bear case (2%) tests whether the deal still works if the mountain real estate market softens. Note: you only realize appreciation when you sell, and depreciation recapture (25% rate) reduces your net proceeds at exit.</p>
+          </div>
+        </div>
+
+        <div class="math-section">
+          <div class="math-toggle" onclick="toggleMath(this)">
+            <span class="math-arrow">▶</span>
+            <span class="math-toggle-label">4 · Renovation ROI</span>
+          </div>
+          <div class="math-content" id="math-reno-content">
+            <p>Renovation creates value three ways: immediate equity (purchase price + reno cost &lt; post-reno value), higher nightly rates (revenue lift), and additional tax depreciation on the improvement spend.</p>
+            <div class="math-formula" id="math-reno">Loading...</div>
+            <p class="math-note">Renovation costs are treated as 15-year depreciable improvements, also eligible for bonus depreciation. At a 40% tax bracket, a $85K renovation generates roughly $14–20K in additional year-one tax savings on top of the property cost seg.</p>
+          </div>
+        </div>
+
+        <div class="math-section">
+          <div class="math-toggle" onclick="toggleMath(this)">
+            <span class="math-arrow">▶</span>
+            <span class="math-toggle-label">5 · Total Return on Invested Capital</span>
+          </div>
+          <div class="math-content">
+            <p>Total return combines all four value drivers. The percentage is calculated on total cash invested (down payment + renovation), not purchase price — this is cash-on-cash return on your actual out-of-pocket capital.</p>
+            <div class="math-formula" id="math-total">Loading...</div>
+            <p class="math-note">For comparison: S&P 500 (VOO) historically returns ~10%/year, or ~61% over 5 years. This deal needs to clear that hurdle to justify the illiquidity, management time, and single-asset concentration risk.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TRADEOFF ANALYSIS -->
+      <div class="breakdown">
+        <div class="breakdown-title">The Key Tradeoffs — What This Calculator Shows</div>
+        <table class="btable">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>5-Yr Return</th>
+              <th>Annual Cash Feel</th>
+              <th>Risk Level</th>
+            </tr>
+          </thead>
+          <tbody id="tradeoff-body"></tbody>
+        </table>
+      </div>
+
+      <!-- VERDICT -->
+      <div class="verdict-box" id="verdict-box">
+        <div class="verdict-box-title" id="verdict-title">Analysis</div>
+        <div class="verdict-box-text" id="verdict-text">Adjust assumptions above to see verdict.</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  price: 900000,
+  revenue: 60000,
+  appr: 6,
+  taxrate: 37,
+  rate: 6.75,
+  costseg: true,
+  matpart: true,
+  bonus: 40,
+  hoa: 800,
+  fees: 12,
+  reno: 0,
+  renolift: 0,
+  renovaluelift: 0
+};
+
+function setToggle(key, val) {
+  state[key] = val;
+  if (key === 'costseg') {
+    document.getElementById('tog-costseg-yes').classList.toggle('active', val === true);
+    document.getElementById('tog-costseg-no').classList.toggle('active', val === false);
+  } else if (key === 'matpart') {
+    document.getElementById('tog-matpart-yes').classList.toggle('active', val === true);
+    document.getElementById('tog-matpart-no').classList.toggle('active', val === false);
+  } else if (key === 'bonus') {
+    [40,20,0].forEach(v => document.getElementById(`tog-bonus-${v}`).classList.toggle('active', v === val));
+  }
+  calculate();
+}
+
+function fmt(n, prefix='$') {
+  const abs = Math.abs(n);
+  const s = abs >= 1000 ? prefix + Math.round(abs).toLocaleString() : prefix + Math.round(abs).toLocaleString();
+  return n < 0 ? '-' + s : s;
+}
+
+function fmtPct(n) {
+  return (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+}
+
+function calcYear(yr) {
+  const { price, revenue, appr, taxrate, rate, costseg, matpart, bonus, hoa, fees, reno, renolift, renovaluelift } = state;
+  const down = price * 0.2;
+  const loan = price * 0.8;
+  // Total cash invested = down payment + renovation (paid out of pocket, not financed)
+  const totalCashIn = down + reno;
+
+  // Effective starting property value after reno value lift
+  const renoValueBump = price * (renovaluelift / 100);
+  const effectiveBaseValue = price + renoValueBump;
+
+  // Monthly mortgage P&I (mortgage stays on purchase price only)
+  const monthlyRate = rate / 100 / 12;
+  const nPayments = 360;
+  const monthlyPI = loan * monthlyRate * Math.pow(1 + monthlyRate, nPayments) / (Math.pow(1 + monthlyRate, nPayments) - 1);
+  const annualMortgage = monthlyPI * 12;
+
+  // Expenses
+  const propertyTax = price * 0.005; // ~0.5% Summit County
+  const insurance = 3000;
+  const utilities = 3600;
+  const supplies = 2400;
+  const maintenance = price * 0.01;
+  const hoaAnnual = hoa * 12;
+
+  // Revenue: apply reno lift multiplier, then annual growth (reno assumed complete before yr 1)
+  const renoRevenueMultiplier = 1 + (renolift / 100);
+  const growthMultiplier = yr === 1 ? 1 : yr === 2 ? 1.05 : yr === 3 ? 1.10 : yr === 4 ? 1.15 : 1.20;
+  const adjRevenue = revenue * renoRevenueMultiplier * growthMultiplier;
+  const adjPlatform = adjRevenue * (fees / 100);
+
+  const totalExpenses = annualMortgage + adjPlatform + propertyTax + insurance + utilities + supplies + maintenance + hoaAnnual;
+  const cashFlow = adjRevenue - totalExpenses;
+
+  // Depreciation — includes reno cost as depreciable improvement (5-yr accelerated)
+  const landPct = 0.15;
+  const buildingVal = price * (1 - landPct);
+  const normalDepr = buildingVal / 27.5;
+
+  // Reno depreciation: improvements depreciate over 15yr; bonus eligible
+  const renoDeprBonus = yr === 1 ? reno * (bonus / 100) : 0;
+  const renoDeprRegular = reno * (1 - bonus/100) / 15;
+
+  // Cost segregation: reclassify ~20% of purchase price
+  let costSegBonus = 0;
+  let costSegRegular = 0;
+  if (costseg) {
+    const reclassified = price * 0.20;
+    const bonusPct = yr === 1 ? bonus / 100 : 0;
+    costSegBonus = yr === 1 ? reclassified * bonusPct : 0;
+    const remainingReclassified = reclassified * (1 - (yr === 1 ? bonusPct : 0));
+    costSegRegular = yr === 1 ? remainingReclassified / 7 : (reclassified * (1 - bonus/100)) / 7;
+  }
+
+  const totalDepr = normalDepr + costSegBonus + costSegRegular + renoDeprBonus + renoDeprRegular;
+
+  // Taxable income from property
+  const mortgageInterest = yr === 1 ? loan * (rate/100) * 0.95 :
+    yr === 2 ? loan * (rate/100) * 0.93 :
+    yr === 3 ? loan * (rate/100) * 0.91 :
+    yr === 4 ? loan * (rate/100) * 0.89 : loan * (rate/100) * 0.87;
+
+  const taxableIncome = adjRevenue - (adjPlatform + propertyTax + insurance + utilities + supplies + maintenance + hoaAnnual + mortgageInterest + totalDepr);
+
+  // Tax savings vs no-deduction scenario
+  let taxSavings = 0;
+  if (matpart) {
+    if (taxableIncome < 0) {
+      taxSavings = Math.abs(taxableIncome) * (taxrate / 100);
+    } else {
+      const noDeprTaxable = adjRevenue - (adjPlatform + propertyTax + insurance + utilities + supplies + maintenance + hoaAnnual + mortgageInterest);
+      taxSavings = (noDeprTaxable - taxableIncome) * (taxrate / 100);
+    }
+  } else {
+    if (taxableIncome >= 0) {
+      const noDeprTaxable = adjRevenue - (adjPlatform + propertyTax + insurance + utilities + supplies + maintenance + hoaAnnual + mortgageInterest);
+      taxSavings = (noDeprTaxable - taxableIncome) * (taxrate / 100);
+    }
+  }
+
+  // Appreciation — starts from effectiveBaseValue (purchase + reno value lift)
+  const propValStart = effectiveBaseValue * Math.pow(1 + appr/100, yr - 1);
+  const propValEnd = effectiveBaseValue * Math.pow(1 + appr/100, yr);
+  const appreciationGain = propValEnd - propValStart;
+
+  // Principal paydown (simplified)
+  const annualInterest = mortgageInterest;
+  const principalPaydown = annualMortgage - annualInterest;
+
+  return {
+    cashFlow,
+    taxSavings: Math.max(0, taxSavings),
+    appreciationGain,
+    principalPaydown,
+    totalDepr,
+    totalExpenses,
+    adjRevenue,
+    annualMortgage,
+    hoaAnnual,
+    propertyTax,
+    adjPlatform,
+    maintenance,
+    insurance,
+    utilities,
+    supplies,
+    mortgageInterest,
+    normalDepr,
+    costSegBonus,
+    renoDeprBonus,
+    renoValueBump,
+    totalCashIn,
+    taxableIncome
+  };
+}
+
+function calculate() {
+  const { price, appr, taxrate, rate, costseg, matpart, bonus, reno, renolift, renovaluelift } = state;
+  const down = price * 0.2;
+  const totalCashIn = down + reno;
+
+  // Update labels
+  document.getElementById('lbl-price').textContent = '$' + price.toLocaleString();
+  document.getElementById('lbl-revenue').textContent = '$' + state.revenue.toLocaleString();
+  document.getElementById('lbl-appr').textContent = state.appr.toFixed(1) + '%';
+  document.getElementById('lbl-taxrate').textContent = state.taxrate + '%';
+  document.getElementById('lbl-rate').textContent = state.rate.toFixed(2) + '%';
+  document.getElementById('lbl-hoa').textContent = '$' + state.hoa.toLocaleString();
+  document.getElementById('lbl-fees').textContent = state.fees + '%';
+  document.getElementById('lbl-reno').textContent = reno === 0 ? '$0' : '$' + reno.toLocaleString();
+  document.getElementById('lbl-renolift').textContent = renolift + '%';
+  document.getElementById('lbl-renovaluelift').textContent = renovaluelift + '%';
+
+  // Show/hide reno lift sliders based on reno amount
+  const renoLiftVisibility = reno > 0 ? 'block' : 'block'; // always show
+
+  const years = [1,2,3,4,5].map(yr => ({ yr, ...calcYear(yr) }));
+
+  // KPIs
+  const y1 = years[0];
+  const cfEl = document.getElementById('kpi-cf1');
+  cfEl.textContent = fmt(y1.cashFlow);
+  cfEl.className = 'kpi-value ' + (y1.cashFlow >= 0 ? 'pos' : 'neg');
+
+  const taxEl = document.getElementById('kpi-tax1');
+  taxEl.textContent = fmt(y1.taxSavings);
+  document.getElementById('kpi-tax1-sub').textContent = reno > 0
+    ? `incl. $${Math.round(y1.renoDeprBonus/1000)}K reno bonus depr`
+    : 'cost seg + depreciation';
+
+  const eqEl = document.getElementById('kpi-eq1');
+  const eq1 = y1.appreciationGain + y1.principalPaydown;
+  eqEl.textContent = fmt(eq1);
+  eqEl.className = 'kpi-value ' + (eq1 >= 0 ? 'pos' : 'neg');
+  document.getElementById('kpi-eq1-sub').textContent = reno > 0 && renovaluelift > 0
+    ? `incl. $${Math.round(y1.renoValueBump/1000)}K reno value lift`
+    : 'appreciation + paydown';
+
+  const total5yr = years.reduce((s, y) => s + y.cashFlow + y.taxSavings + y.appreciationGain + y.principalPaydown, 0);
+  const total5pct = (total5yr / totalCashIn * 100);
+  const yr5El = document.getElementById('kpi-5yr');
+  yr5El.textContent = fmtPct(total5pct);
+  yr5El.className = 'kpi-value ' + (total5pct >= 0 ? 'pos' : 'neg');
+  document.getElementById('header-return').textContent = fmtPct(total5pct);
+  document.getElementById('header-irr').textContent = `on $${Math.round(totalCashIn/1000)}K invested${reno > 0 ? ' (incl. reno)' : ''}`;
+
+  // CHART
+  const chartArea = document.getElementById('chart-area');
+  const labelsEl = document.getElementById('chart-labels');
+  
+  // Find scale
+  const allVals = years.flatMap(y => [Math.abs(y.cashFlow), y.taxSavings, y.appreciationGain]);
+  const maxVal = Math.max(...allVals, 1);
+  const chartH = 180;
+
+  chartArea.innerHTML = '';
+  labelsEl.innerHTML = '';
+
+  // zero line position
+  const maxCf = Math.max(...years.map(y => Math.abs(y.cashFlow)));
+  const zeroY = Math.round((maxCf / maxVal) * chartH * 0.25); // rough
+
+  years.forEach(y => {
+    const col = document.createElement('div');
+    col.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;position:relative;';
+
+    // stacked bar
+    const barWrap = document.createElement('div');
+    barWrap.style.cssText = `width:100%;display:flex;flex-direction:column;align-items:center;height:${chartH}px;justify-content:flex-end;position:relative;`;
+
+    const cf = y.cashFlow;
+    const tax = y.taxSavings;
+    const apprGain = y.appreciationGain;
+
+    const cfH = Math.max(2, Math.abs(cf) / maxVal * chartH * 0.5);
+    const taxH = Math.max(2, tax / maxVal * chartH * 0.5);
+    const apprH = Math.max(2, apprGain / maxVal * chartH * 0.5);
+
+    const totalH = (cf >= 0 ? cfH : 0) + taxH + apprH;
+    const totalVal = cf + tax + apprGain;
+
+    // total label
+    const totalLbl = document.createElement('div');
+    totalLbl.style.cssText = `font-family:'DM Mono',monospace;font-size:10px;font-weight:500;position:absolute;top:${chartH - totalH - 18}px;color:${totalVal >= 0 ? 'var(--pine-lt)' : 'var(--red)'}`;
+    totalLbl.textContent = fmt(totalVal);
+    barWrap.appendChild(totalLbl);
+
+    if (cf < 0) {
+      const negBar = document.createElement('div');
+      negBar.style.cssText = `width:70%;background:var(--red-lt);height:${cfH}px;margin-bottom:2px;`;
+      barWrap.appendChild(negBar);
+    }
+
+    const apprBar = document.createElement('div');
+    apprBar.style.cssText = `width:70%;background:var(--sky);height:${apprH}px;margin-bottom:2px;`;
+    barWrap.appendChild(apprBar);
+
+    const taxBar = document.createElement('div');
+    taxBar.style.cssText = `width:70%;background:var(--gold);height:${taxH}px;margin-bottom:2px;`;
+    barWrap.appendChild(taxBar);
+
+    if (cf >= 0) {
+      const posBar = document.createElement('div');
+      posBar.style.cssText = `width:70%;background:var(--pine-lt);height:${cfH}px;`;
+      barWrap.appendChild(posBar);
+    }
+
+    col.appendChild(barWrap);
+
+    const lbl = document.createElement('div');
+    lbl.style.cssText = `font-family:'DM Mono',monospace;font-size:10px;color:var(--mid);margin-top:8px;text-align:center;`;
+    lbl.textContent = `Yr ${y.yr}`;
+    col.appendChild(lbl);
+
+    chartArea.appendChild(col);
+  });
+
+  // BREAKDOWN TABLE
+  const tbody = document.getElementById('breakdown-body');
+  tbody.innerHTML = '';
+
+  const rows = [
+    { label: '— Income', grp: true },
+    { label: 'Gross STR Revenue', key: 'adjRevenue', cls: 'pos-text' },
+    { label: '— Expenses', grp: true },
+    { label: 'Mortgage (P&I)', key: 'annualMortgage', neg: true },
+    { label: 'HOA', key: 'hoaAnnual', neg: true },
+    { label: 'Property Tax', key: 'propertyTax', neg: true },
+    { label: 'Platform Fees', key: 'adjPlatform', neg: true },
+    { label: 'Insurance + Utilities', vals: y => y.insurance + y.utilities, neg: true },
+    { label: 'Maintenance + Supplies', vals: y => y.maintenance + y.supplies, neg: true },
+    { label: 'NET CASH FLOW', key: 'cashFlow', subtotal: true },
+    { label: '— Tax Benefits', grp: true },
+    { label: 'Normal Depreciation Deduction', key: 'normalDepr', cls: 'gold-text' },
+    { label: 'Cost Seg Bonus Depreciation (Yr 1)', vals: y => y.yr === 1 ? y.costSegBonus : 0, cls: 'gold-text' },
+    { label: 'Tax Savings (vs. no deductions)', key: 'taxSavings', cls: 'gold-text' },
+    { label: '— Equity Building', grp: true },
+    { label: 'Property Appreciation', key: 'appreciationGain', cls: 'sky-text' },
+    { label: '— TOTAL ECONOMIC RETURN', key: null, total: true },
+  ];
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    if (row.grp) {
+      tr.className = 'grp';
+      tr.innerHTML = `<td colspan="7">${row.label}</td>`;
+    } else if (row.total) {
+      tr.className = 'total';
+      const totals = years.map(y => y.cashFlow + y.taxSavings + y.appreciationGain);
+      const sum = totals.reduce((a,b) => a+b, 0);
+      tr.innerHTML = `<td>${row.label}</td>${totals.map(v => `<td class="${v>=0?'pos-text':'neg-text'}">${fmt(v)}</td>`).join('')}<td class="${sum>=0?'pos-text':'neg-text'}">${fmt(sum)}</td>`;
+    } else if (row.subtotal) {
+      tr.className = 'subtotal';
+      const vals = years.map(y => y[row.key]);
+      const sum = vals.reduce((a,b)=>a+b,0);
+      tr.innerHTML = `<td>${row.label}</td>${vals.map(v=>`<td class="mono ${v>=0?'pos-text':'neg-text'}">${fmt(v)}</td>`).join('')}<td class="mono ${sum>=0?'pos-text':'neg-text'}">${fmt(sum)}</td>`;
+    } else {
+      const vals = years.map(y => row.vals ? row.vals(y) : y[row.key]);
+      const sum = vals.reduce((a,b)=>a+b,0);
+      const cls = row.cls || (row.neg ? 'neg-text' : '');
+      tr.innerHTML = `<td>${row.label}</td>${vals.map(v=>`<td class="mono ${cls}">${row.neg ? fmt(-Math.abs(v)) : fmt(v)}</td>`).join('')}<td class="mono ${cls}">${row.neg ? fmt(-Math.abs(sum)) : fmt(sum)}</td>`;
+    }
+    tbody.appendChild(tr);
+  });
+
+  // TRADEOFF TABLE
+  // compute scenario variants
+  const origState = {...state};
+
+  // No cost seg
+  state.costseg = false;
+  state.matpart = true;
+  const noCostSeg = [1,2,3,4,5].map(i => calcYear(i));
+  const noCostSeg5 = noCostSeg.reduce((s,y) => s + y.cashFlow + y.taxSavings + y.appreciationGain + y.principalPaydown, 0);
+
+  // No matpart
+  state.costseg = origState.costseg;
+  state.matpart = false;
+  const noMatPart = [1,2,3,4,5].map(i => calcYear(i));
+  const noMatPart5 = noMatPart.reduce((s,y) => s + y.cashFlow + y.taxSavings + y.appreciationGain + y.principalPaydown, 0);
+
+  // Low appreciation
+  state.costseg = origState.costseg;
+  state.matpart = origState.matpart;
+  const origAppr = state.appr;
+  state.appr = 2;
+  const lowAppr = [1,2,3,4,5].map(i => calcYear(i));
+  const lowAppr5 = lowAppr.reduce((s,y) => s + y.cashFlow + y.taxSavings + y.appreciationGain + y.principalPaydown, 0);
+  state.appr = origAppr;
+
+  // No reno scenario (for comparison if reno > 0)
+  let noReno5 = null;
+  if (reno > 0) {
+    state.reno = 0; state.renolift = 0; state.renovaluelift = 0;
+    const noRenoYrs = [1,2,3,4,5].map(i => calcYear(i));
+    noReno5 = noRenoYrs.reduce((s,y) => s + y.cashFlow + y.taxSavings + y.appreciationGain + y.principalPaydown, 0);
+  }
+
+  // Restore
+  state.costseg = origState.costseg;
+  state.matpart = origState.matpart;
+  state.reno = origState.reno;
+  state.renolift = origState.renolift;
+  state.renovaluelift = origState.renovaluelift;
+
+  const trBody = document.getElementById('tradeoff-body');
+  trBody.innerHTML = '';
+
+  const scenarioData = [
+    { name: 'Full strategy (cost seg + material part)', total5: total5yr, cashIn: totalCashIn, cfY1: y1.cashFlow, risk: 'Medium', note: 'Requires 500+ hrs/yr documentation' },
+    { name: 'No cost segregation study', total5: noCostSeg5, cashIn: totalCashIn, cfY1: noCostSeg[0].cashFlow, risk: 'Lower', note: 'Simpler but leaves tax savings on table' },
+    { name: 'Cost seg but no material participation', total5: noMatPart5, cashIn: totalCashIn, cfY1: noMatPart[0].cashFlow, risk: 'Low', note: 'Hire a manager — losses suspended' },
+    { name: 'Bear case (2% appreciation)', total5: lowAppr5, cashIn: totalCashIn, cfY1: lowAppr[0].cashFlow, risk: 'High', note: 'Flat market — tax savings must carry the deal' },
+  ];
+
+  if (noReno5 !== null) {
+    scenarioData.push({
+      name: `No renovation (buy as-is)`,
+      total5: noReno5,
+      cashIn: down,
+      cfY1: noCostSeg[0].cashFlow,
+      risk: 'Lower',
+      note: `Skip $${Math.round(reno/1000)}K reno — lower cash invested, lower returns`
+    });
+  }
+
+  scenarioData.forEach((sc) => {
+    const tr = document.createElement('tr');
+    const pct = (sc.total5 / sc.cashIn * 100);
+    tr.innerHTML = `
+      <td>${sc.name}<div style="font-size:11px;color:var(--mid);margin-top:2px;">${sc.note}</div></td>
+      <td class="mono ${pct>=0?'pos-text':'neg-text'}">${fmtPct(pct)}</td>
+      <td class="mono ${sc.cfY1>=0?'pos-text':'neg-text'}">${fmt(sc.cfY1)}/yr</td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:11px;padding:3px 8px;background:${sc.risk==='Low'||sc.risk==='Lower'?'rgba(28,43,26,0.08)':sc.risk==='Medium'?'rgba(196,137,42,0.1)':'rgba(168,60,42,0.1)'};color:${sc.risk==='Low'||sc.risk==='Lower'?'var(--pine-lt)':sc.risk==='Medium'?'var(--gold)':'var(--red)'};">${sc.risk}</span></td>
+    `;
+    trBody.appendChild(tr);
+  });
+
+  // VERDICT
+  const verdictBox = document.getElementById('verdict-box');
+  const verdictTitle = document.getElementById('verdict-title');
+  const verdictText = document.getElementById('verdict-text');
+
+  const renoNote = reno > 0 ? ` Your <strong>$${Math.round(reno/1000)}K renovation</strong> adds <strong>${fmt(y1.renoDeprBonus)}</strong> in bonus depreciation year one and bumps the revenue base by ${renolift}% — the tax treatment on the reno spend is actually very favorable at your bracket.` : '';
+
+  if (total5pct > 100) {
+    verdictBox.className = 'verdict-box positive';
+    verdictTitle.textContent = '✓ Strong Investment Case';
+    verdictText.innerHTML = `With these assumptions, you're looking at a <strong>${fmtPct(total5pct)} total return</strong> on your $${Math.round(totalCashIn/1000)}K invested over 5 years. Cash flow is <strong>${fmt(y1.cashFlow)}/year</strong> — painful if negative, but <strong>${fmt(y1.taxSavings)}</strong> in year-one tax savings ${y1.taxSavings > 0 ? 'more than compensates' : 'helps offset that'}. The deal works primarily through appreciation and tax benefits, not cash flow.${renoNote}`;
+  } else if (total5pct > 30) {
+    verdictBox.className = 'verdict-box neutral';
+    verdictTitle.textContent = '⚡ Marginal — Depends on Appreciation';
+    verdictText.innerHTML = `A <strong>${fmtPct(total5pct)} return</strong> over 5 years is positive but not exceptional — roughly equivalent to leaving the money in VOO. The deal is heavily dependent on mountain real estate appreciation continuing.${renoNote} If appreciation disappoints or you can't maintain material participation, equities may outperform.`;
+  } else {
+    verdictBox.className = 'verdict-box negative';
+    verdictTitle.textContent = '✗ Weak Case — Reconsider Assumptions';
+    verdictText.innerHTML = `With these assumptions, the 5-year return of <strong>${fmtPct(total5pct)}</strong> is weak relative to the illiquidity and complexity. Your $${Math.round(totalCashIn/1000)}K would likely do better in VOO (expected ~50–70% over 5 years). Either the purchase price is too high, revenue is too low, or the tax benefits aren't being captured. Try adjusting the sliders — particularly material participation and appreciation rate.`;
+  }
+
+  updateMathExplainers(y1, years, totalCashIn);
+}
+
+// Wire up sliders
+['price','revenue','appr','taxrate','rate','hoa','fees','reno','renolift','renovaluelift'].forEach(key => {
+  const el = document.getElementById(`sl-${key}`);
+  if (el) el.addEventListener('input', function() {
+    state[key] = parseFloat(this.value);
+    calculate();
+  });
+});
+
+// Accordion
+function toggleMath(el) {
+  el.classList.toggle('open');
+  const content = el.nextElementSibling;
+  content.classList.toggle('visible');
+}
+
+// Save scenario to localStorage
+function saveScenario() {
+  try {
+    localStorage.setItem('str_scenario', JSON.stringify(state));
+    showMsg('✓ Scenario saved');
+  } catch(e) { showMsg('Storage unavailable — use Share Link instead'); }
+}
+
+function loadScenario() {
+  try {
+    const saved = localStorage.getItem('str_scenario');
+    if (!saved) { showMsg('No saved scenario found'); return; }
+    const s = JSON.parse(saved);
+    Object.assign(state, s);
+    // Update all sliders
+    ['price','revenue','appr','taxrate','rate','hoa','fees','reno','renolift','renovaluelift'].forEach(k => {
+      const el = document.getElementById(`sl-${k}`);
+      if (el && state[k] !== undefined) el.value = state[k];
+    });
+    // Update toggles
+    setToggle('costseg', state.costseg);
+    setToggle('matpart', state.matpart);
+    setToggle('bonus', state.bonus);
+    calculate();
+    showMsg('✓ Scenario loaded');
+  } catch(e) { showMsg('Could not load scenario'); }
+}
+
+// Encode state to URL hash for sharing
+function copyShareLink() {
+  const params = new URLSearchParams();
+  Object.entries(state).forEach(([k,v]) => params.set(k, v));
+  const url = window.location.href.split('#')[0] + '#' + params.toString();
+  navigator.clipboard.writeText(url).then(() => showMsg('✓ Link copied — share with advisor'))
+    .catch(() => { showMsg('Copy manually: ' + url.substring(0,60) + '...'); });
+}
+
+// Load from URL hash on page load
+function loadFromURL() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return;
+  try {
+    const params = new URLSearchParams(hash);
+    ['price','revenue','appr','taxrate','rate','hoa','fees','reno','renolift','renovaluelift'].forEach(k => {
+      if (params.has(k)) { state[k] = parseFloat(params.get(k)); }
+    });
+    if (params.has('costseg')) state.costseg = params.get('costseg') === 'true';
+    if (params.has('matpart')) state.matpart = params.get('matpart') === 'true';
+    if (params.has('bonus')) state.bonus = parseInt(params.get('bonus'));
+    // Sync sliders
+    ['price','revenue','appr','taxrate','rate','hoa','fees','reno','renolift','renovaluelift'].forEach(k => {
+      const el = document.getElementById(`sl-${k}`);
+      if (el && state[k] !== undefined) el.value = state[k];
+    });
+    setToggle('costseg', state.costseg);
+    setToggle('matpart', state.matpart);
+    setToggle('bonus', state.bonus);
+    showMsg('✓ Loaded from shared link');
+  } catch(e) {}
+}
+
+// Export — print-friendly version
+function exportPDF() {
+  // Open all math sections for print
+  document.querySelectorAll('.math-toggle').forEach(t => {
+    t.classList.add('open');
+    t.nextElementSibling.classList.add('visible');
+  });
+  window.print();
+}
+
+function showMsg(msg) {
+  const el = document.getElementById('save-msg');
+  el.textContent = msg;
+  setTimeout(() => el.textContent = '', 3000);
+}
+
+// Update math formula explainers with live values
+function updateMathExplainers(y1, years, totalCashIn) {
+  const { price, revenue, appr, taxrate, rate, costseg, matpart, bonus, hoa, fees, reno, renolift, renovaluelift } = state;
+  const down = price * 0.2;
+  const loan = price * 0.8;
+  const monthlyRate = rate / 100 / 12;
+  const nPayments = 360;
+  const monthlyPI = loan * monthlyRate * Math.pow(1 + monthlyRate, nPayments) / (Math.pow(1 + monthlyRate, nPayments) - 1);
+
+  // Cash flow math
+  const cfEl = document.getElementById('math-cf');
+  if (cfEl) cfEl.innerHTML =
+    `<span class="hlg">Gross Revenue</span>         = ${fmt(y1.adjRevenue)}\n` +
+    `<span class="hlr">Mortgage (P&I)</span>        = ${fmt(-y1.annualMortgage)}  ← $${Math.round(loan/1000)}K loan @ ${rate}% = $${Math.round(monthlyPI)}/mo\n` +
+    `<span class="hlr">HOA</span>                   = ${fmt(-y1.hoaAnnual)}  ← $${hoa}/mo × 12\n` +
+    `<span class="hlr">Property Tax</span>          = ${fmt(-y1.propertyTax)}  ← ${price/1000 < 1000 ? '$'+Math.round(price/1000)+'K' : '$'+Math.round(price/1000)+'K'} × 0.5%\n` +
+    `<span class="hlr">Platform Fees</span>         = ${fmt(-y1.adjPlatform)}  ← ${fees}% of revenue\n` +
+    `<span class="hlr">Insurance + Utilities</span> = ${fmt(-(y1.insurance+y1.utilities))}\n` +
+    `<span class="hlr">Maintenance + Supplies</span>= ${fmt(-(y1.maintenance+y1.supplies))}  ← 1% of price + $2,400\n` +
+    `──────────────────────────────────\n` +
+    `<span class="${y1.cashFlow>=0?'hlg':'hlr'}">NET CASH FLOW (Yr 1)</span>   = ${fmt(y1.cashFlow)}`;
+
+  // Depreciation math
+  const landVal = price * 0.15;
+  const buildingVal = price * 0.85;
+  const normalDepr = buildingVal / 27.5;
+  const reclassified = costseg ? price * 0.20 : 0;
+  const costSegBonusAmt = costseg ? reclassified * (bonus/100) : 0;
+  const costSegRegAmt = costseg ? reclassified * (1-bonus/100) / 7 : 0;
+  const renoBonus = reno * (bonus/100);
+  const renoReg = reno * (1-bonus/100) / 15;
+
+  const deprEl = document.getElementById('math-depr');
+  if (deprEl) deprEl.innerHTML =
+    `<span class="hl">Normal Depreciation</span>\n` +
+    `  Building Value       = ${fmt(buildingVal)}  ← $${Math.round(price/1000)}K × 85% (excl. land)\n` +
+    `  Annual Deduction     = ${fmt(normalDepr)}  ← ÷ 27.5 years\n\n` +
+    (costseg ? `<span class="hl">Cost Segregation (Year 1)</span>\n` +
+    `  Reclassified Assets  = ${fmt(reclassified)}  ← ~20% of purchase price\n` +
+    `  Bonus Depr (${bonus}%)    = ${fmt(costSegBonusAmt)}  ← taken immediately\n` +
+    `  Regular Depr (yr 1)  = ${fmt(costSegRegAmt)}  ← remaining ÷ 7 yrs\n\n` : '') +
+    (reno > 0 ? `<span class="hl">Renovation Depreciation (Year 1)</span>\n` +
+    `  Reno Cost            = ${fmt(reno)}\n` +
+    `  Bonus Depr (${bonus}%)    = ${fmt(renoBonus)}  ← taken immediately\n` +
+    `  Regular Depr (yr 1)  = ${fmt(renoReg)}  ← remaining ÷ 15 yrs\n\n` : '') +
+    `──────────────────────────────────\n` +
+    `<span class="hl">Total Year 1 Deductions</span>  = ${fmt(y1.totalDepr)}\n` +
+    `<span class="hlg">Tax Savings</span>             = ${fmt(y1.taxSavings)}  ← ${fmt(y1.totalDepr)} × ${taxrate}% tax rate\n` +
+    `<span class="math-note">${matpart ? '✓ Material participation: losses offset W-2 income' : '⚠ No material participation: passive losses suspended'}</span>`;
+
+  // Equity math
+  const effectiveBase = price + price*(renovaluelift/100);
+  const apprGainYr1 = effectiveBase * (appr/100);
+  const equityEl = document.getElementById('math-equity');
+  if (equityEl) equityEl.innerHTML =
+    `<span class="hls">Appreciation (Year 1)</span>\n` +
+    `  Effective Base Value = ${fmt(effectiveBase)}  ← purchase${renovaluelift>0?' + reno value lift':''}\n` +
+    `  Annual Rate          = ${appr}%\n` +
+    `  Year 1 Gain          = ${fmt(apprGainYr1)}  ← ${fmt(effectiveBase)} × ${appr}%\n\n` +
+    `<span class="hls">Principal Paydown (Year 1)</span>\n` +
+    `  Monthly Payment      = ${fmt(monthlyPI)}\n` +
+    `  Interest Portion     = ${fmt(y1.mortgageInterest)}  ← ~95% of total in yr 1\n` +
+    `  Principal Paid       = ${fmt(y1.principalPaydown)}  ← builds equity directly\n\n` +
+    `──────────────────────────────────\n` +
+    `<span class="hls">Total Equity Yr 1</span>        = ${fmt(apprGainYr1 + y1.principalPaydown)}`;
+
+  // Reno ROI math
+  const renoEl = document.getElementById('math-reno');
+  if (renoEl) {
+    if (reno === 0) {
+      renoEl.innerHTML = `<span class="math-note">Set Renovation Cost slider above $0 to see this calculation.</span>`;
+    } else {
+      const allInCost = price + reno;
+      const postRenoVal = price + price*(renovaluelift/100);
+      const instantEquity = postRenoVal - allInCost;
+      renoEl.innerHTML =
+        `<span class="hl">Renovation Economics</span>\n` +
+        `  Purchase Price       = ${fmt(price)}\n` +
+        `  + Renovation Cost    = ${fmt(reno)}\n` +
+        `  All-In Cost          = ${fmt(allInCost)}\n` +
+        `  Post-Reno Value      = ${fmt(postRenoVal)}  ← ${renovaluelift}% value lift\n` +
+        `  <span class="${instantEquity>=0?'hlg':'hlr'}">Instant Equity Created  = ${fmt(instantEquity)}</span>\n\n` +
+        `<span class="hl">Revenue Impact</span>\n` +
+        `  Base Annual Revenue  = ${fmt(revenue)}\n` +
+        `  Reno Lift (${renolift}%)    = ${fmt(revenue*(renolift/100))}\n` +
+        `  <span class="hlg">New Annual Revenue      = ${fmt(revenue*(1+renolift/100))}</span>\n\n` +
+        `<span class="hl">Additional Tax Savings</span>\n` +
+        `  Reno Bonus Depr      = ${fmt(renoBonus)}  ← ${bonus}% of ${fmt(reno)}\n` +
+        `  <span class="hlg">Tax Saved on Reno       = ${fmt(renoBonus * taxrate/100)}  ← × ${taxrate}% rate</span>`;
+    }
+  }
+
+  // Total return math
+  const total5yr = years.reduce((s,y) => s + y.cashFlow + y.taxSavings + y.appreciationGain + y.principalPaydown, 0);
+  const totalEl = document.getElementById('math-total');
+  const cfTotal = years.reduce((s,y)=>s+y.cashFlow,0);
+  const taxTotal = years.reduce((s,y)=>s+y.taxSavings,0);
+  const apprTotal = years.reduce((s,y)=>s+y.appreciationGain,0);
+  const pdTotal = years.reduce((s,y)=>s+y.principalPaydown,0);
+  if (totalEl) totalEl.innerHTML =
+    `<span class="hlr">5-Yr Cash Flow</span>          = ${fmt(cfTotal)}\n` +
+    `<span class="hl">+ Tax Savings</span>           = ${fmt(taxTotal)}\n` +
+    `<span class="hls">+ Appreciation</span>          = ${fmt(apprTotal)}\n` +
+    `<span class="hls">+ Principal Paydown</span>     = ${fmt(pdTotal)}\n` +
+    `──────────────────────────────────\n` +
+    `<span class="hlg">Total Economic Return</span>   = ${fmt(total5yr)}\n\n` +
+    `<span class="hlg">Return on Invested Capital</span>\n` +
+    `  Total Return         = ${fmt(total5yr)}\n` +
+    `  ÷ Cash Invested      = ${fmt(totalCashIn)}  ← down payment${reno>0?' + reno':''}\n` +
+    `  <span class="hlg">= ${(total5yr/totalCashIn*100).toFixed(1)}% over 5 years  (${(total5yr/totalCashIn*100/5).toFixed(1)}%/yr)</span>\n\n` +
+    `<span class="math-note">VOO benchmark: ~10%/yr = ~61% over 5 years</span>`;
+}
+
+loadFromURL();
+calculate();
+</script>
+</body>
+</html>
